@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from api import connect_bot, get_channels, select_channel
+from api import connect_bot, get_channels, select_channel, has_audio_stream
 
 client = commands.Bot(command_prefix='!', intents=discord.Intents.all())
 last_guess = {}
@@ -78,6 +78,21 @@ async def stop(ctx):
         await ctx.send("Parkert.")
     else:
         await ctx.send("Botten spiller ikke av noe for øyeblikket!")
+
+# Legge til nye kanaler
+@client.command(name="add", help='Legg til kanal, format= "kanalnavn=URL"')
+async def add(ctx, channel_url: str):
+    try:
+        # Splitter kanalnavnet og URL-en
+        channel_name, url = channel_url.split('=', 1)
+        if await has_audio_stream(url.strip()):
+            with open("channels.env", "a") as file:
+                file.write(f"{channel_url}\n")
+            await ctx.send(f"Kanalen '{channel_name.strip()}' er lagt til!")
+        else:
+            await ctx.send("Fant ikke kanalen med lyd.")
+    except ValueError:
+        await ctx.send("Formatet er feil. Bruk formatet: 'kanalnavn=URL'")
 
 # Kjører botten med token hentet fra connect_bot-funksjonen
 client.run(connect_bot())
